@@ -1,0 +1,9 @@
+flask
+youtube-transcript-api
+langchain
+langchain-community
+langchain-core
+langchain-huggingface
+chromadb
+sentence-transformers
+python-dotenv
