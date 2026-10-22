@@ -233,6 +233,10 @@ curl -X POST http://127.0.0.1:5000/ask \
 
 The response shown above illustrates the JSON structure; the actual answer depends on the selected video's transcript and the retrieved passages.
 
+### Input validation and runtime notes
+
+The `/ask` endpoint expects a JSON object with a non-empty string `question`. Missing or invalid payloads return HTTP 400. The Flask development server runs with debugging disabled; **do not use it as a production WSGI server**. The transcript and embeddings are initialized on startup, so failures in transcript availability, package compatibility, or model credentials can prevent the API from starting. These changes have not been validated by a live end-to-end run.
+
 ## 🧠 Key Concepts Demonstrated
 
 - Retrieval-Augmented Generation (RAG)
