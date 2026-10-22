@@ -1,5 +1,18 @@
 # 🎥 YouTube Video Summarizer & Q&A
 
+## Recruiter quick view
+
+**Problem:** Finding answers within a long YouTube video can require searching an entire transcript.
+
+**Approach:** Retrieve available video transcripts, split them into chunks, create embeddings, index them in Chroma and use retrieval-augmented generation to answer questions.
+
+**Architecture:** YouTube transcript → chunking → embeddings → vector index → relevant context retrieval → LLM response → Flask API.
+
+**Current scope:** Transcript-based question answering. A dedicated automatic summary endpoint and polished interactive frontend are **not yet implemented**, as noted below.
+
+**Limitations to test:** Videos without accessible transcripts, multilingual transcripts, long-video processing, embedding quality and unsupported claims in generated answers.
+
+
 <p align="center">
   <strong>Turn YouTube video transcripts into searchable knowledge using Retrieval-Augmented Generation (RAG) and Large Language Models.</strong>
 </p>
