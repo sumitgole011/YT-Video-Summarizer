@@ -63,8 +63,8 @@ app = Flask(__name__)
 def ask():
     data = request.json
     question = data.get("question")
-    answer = chain.invoke({"question": question})
+    answer = chain.invoke(question.strip())
     return jsonify({"answer": answer})
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=False)
