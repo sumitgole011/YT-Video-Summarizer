@@ -1,7 +1,10 @@
-"""Dependency-free source checks; these do not exercise the live model or transcript API."""
+"""Source and offline Flask checks for the YouTube Q&A API."""
 import ast
 from pathlib import Path
 import unittest
+from unittest.mock import Mock, patch
+
+from YT_bot import ragbot
 
 SOURCE = Path(__file__).resolve().parents[1] / "YT_bot" / "ragbot.py"
 
@@ -18,6 +21,27 @@ class ApiContractTests(unittest.TestCase):
     def test_json_validation_present(self):
         self.assertIn("request.get_json(silent=True)", self.source)
         self.assertIn("A non-empty question is required.", self.source)
+
+    def test_invalid_requests_do_not_initialize_pipeline(self):
+        with patch.object(ragbot, "build_chain") as build:
+            client = ragbot.app.test_client()
+            for body in ({}, {"question": " "}, {"question": []}, []):
+                self.assertEqual(client.post("/ask", json=body).status_code, 400)
+            build.assert_not_called()
+
+    def test_valid_requests_reuse_pipeline_and_trim_questions(self):
+        chain = Mock()
+        chain.invoke.return_value = "Answer"
+        with patch.object(ragbot, "_chain", None), patch.object(
+            ragbot, "build_chain", return_value=chain
+        ) as build:
+            client = ragbot.app.test_client()
+            for _ in range(2):
+                response = client.post("/ask", json={"question": "  Why?  "})
+                self.assertEqual(response.json, {"answer": "Answer"})
+            build.assert_called_once_with()
+            self.assertEqual(chain.invoke.call_count, 2)
+            chain.invoke.assert_called_with("Why?")
 
     def test_debug_disabled(self):
         self.assertIn("debug=False", self.source)
