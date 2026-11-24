@@ -83,7 +83,12 @@ def ask():
     question = data.get("question")
     if not isinstance(question, str) or not question.strip():
         return jsonify({"error": "A non-empty question is required."}), 400
-    answer = get_chain().invoke(question.strip())
+    try:
+        chain = get_chain()
+    except Exception as error:
+        app.logger.warning("YouTube Q&A pipeline initialization failed (%s)", type(error).__name__)
+        return jsonify({"error": "The transcript and model are temporarily unavailable."}), 503
+    answer = chain.invoke(question.strip())
     return jsonify({"answer": answer})
 
 if __name__ == "__main__":

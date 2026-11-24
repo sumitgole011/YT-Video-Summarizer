@@ -43,6 +43,25 @@ class ApiContractTests(unittest.TestCase):
             self.assertEqual(chain.invoke.call_count, 2)
             chain.invoke.assert_called_with("Why?")
 
+    def test_pipeline_initialization_failure_returns_503_and_can_retry(self):
+        chain = Mock()
+        chain.invoke.return_value = "Answer"
+        with patch.object(ragbot, "_chain", None), patch.object(
+            ragbot, "build_chain", side_effect=[TimeoutError("provider details"), chain]
+        ) as build:
+            client = ragbot.app.test_client()
+            with self.assertLogs(ragbot.app.logger, level="WARNING") as log:
+                failed = client.post("/ask", json={"question": "Why?"})
+            self.assertEqual(failed.status_code, 503)
+            self.assertEqual(failed.json, {
+                "error": "The transcript and model are temporarily unavailable."
+            })
+            self.assertNotIn("provider details", "\n".join(log.output))
+            recovered = client.post("/ask", json={"question": "Why?"})
+            self.assertEqual(recovered.status_code, 200)
+            self.assertEqual(recovered.json, {"answer": "Answer"})
+            self.assertEqual(build.call_count, 2)
+
     def test_debug_disabled(self):
         self.assertIn("debug=False", self.source)
 
