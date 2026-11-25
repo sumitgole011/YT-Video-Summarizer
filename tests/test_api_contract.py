@@ -62,6 +62,21 @@ class ApiContractTests(unittest.TestCase):
             self.assertEqual(recovered.json, {"answer": "Answer"})
             self.assertEqual(build.call_count, 2)
 
+    def test_inference_failure_returns_json_and_keeps_the_initialized_pipeline(self):
+        chain = Mock()
+        chain.invoke.side_effect = [TimeoutError("provider details"), "Answer"]
+        with patch.object(ragbot, "_chain", chain), patch.object(ragbot, "build_chain") as build:
+            client = ragbot.app.test_client()
+            with self.assertLogs(ragbot.app.logger, level="WARNING") as log:
+                response = client.post("/ask", json={"question": "Why?"})
+            self.assertEqual(response.status_code, 502)
+            self.assertEqual(response.json, {"error": "The model could not answer this question right now."})
+            self.assertNotIn("provider details", "\n".join(log.output))
+            retry = client.post("/ask", json={"question": "Why?"})
+            self.assertEqual(retry.status_code, 200)
+            self.assertEqual(retry.json, {"answer": "Answer"})
+            build.assert_not_called()
+
     def test_debug_disabled(self):
         self.assertIn("debug=False", self.source)
 

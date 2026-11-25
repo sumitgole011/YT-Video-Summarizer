@@ -88,7 +88,11 @@ def ask():
     except Exception as error:
         app.logger.warning("YouTube Q&A pipeline initialization failed (%s)", type(error).__name__)
         return jsonify({"error": "The transcript and model are temporarily unavailable."}), 503
-    answer = chain.invoke(question.strip())
+    try:
+        answer = chain.invoke(question.strip())
+    except Exception as error:
+        app.logger.warning("YouTube Q&A pipeline could not answer (%s)", type(error).__name__)
+        return jsonify({"error": "The model could not answer this question right now."}), 502
     return jsonify({"answer": answer})
 
 if __name__ == "__main__":
